@@ -1,0 +1,109 @@
+---
+title: "families_1993_olson"
+author: "Kelsey Wu"
+date: "3/25/2020"
+output: html_document
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(gt)
+library(infer)
+library(base)
+library(readr)
+options(scipen=999)
+```
+
+```{r set_up, include = FALSE}
+
+# Load ecdat data
+
+load(file = "raw-data/ecdat.Rdata")
+
+```
+
+```{r percent_no_insurance, echo = FALSE}
+
+# Create variable that holds number of men in the sample who are married to
+# women who are neither covered by their husband's insurance nor have
+# health insurance from their own work.
+
+no_insurance <- hi %>%
+  
+  # Extract men married to women who are not covered by 
+  # husband's insurance
+  
+  filter(hhi == "no") %>%
+  
+  # Extract men married to women who do not have health insurance
+  # from their own work
+  
+  filter(whi == "no") %>%
+  
+  # Count number of rows, which is the number of men
+  
+  nrow()
+
+# Create variable that holds total number of men in sample
+
+total_men <- hi %>% nrow()
+
+# Find percentage and round to 2 decimal places
+
+perc_no_insurance <- round(no_insurance / total_men * 100, digits = 2)
+
+```
+
+`r perc_no_insurance` percent of men in Craig Olson's sample (Journal of Applied Econometrics, 1998) are married to women who are neither covered by their husband’s insurance (hhi) nor have health insurance from their own work (whi).
+
+```{r hours_wife_works_per_week, echo = FALSE}
+
+# Create a new tibble with total number of children and respective
+# categories as new columns
+
+total_child_hi <- hi %>%
+  
+  # Create a column that contains total number of children per couple
+  
+  mutate(total_children = kidslt6 + kids618) %>%
+  
+  # Create a column that categorizes numbers of kids into 0, 1, 2, or
+  # 3 or more. Bases these values upon the total_children column, which
+  # contains total number of children. 
+  # If total number of children is larger than or equal to 3, the column
+  # categorizes the wife as one with "3 or more" children.
+  
+  mutate(child_cat = case_when(total_children == 0 ~ "0",
+                               total_children == 1 ~ "1",
+                               total_children == 2 ~ "2",
+                               total_children >= 3 ~ "3 or more"))
+
+# Create plot with x axis as hours that wife works a week, and 
+# with fill as a distinguisher for how many children the couple has.
+
+ggplot(total_child_hi, aes(x = whrswk, fill = child_cat)) +
+  
+  # Set graph as geom_density, which draws kernel density estimate
+  
+  geom_density() +
+  
+  # Set colors to viridis color scales, with an alpha of 0.4
+  
+  scale_fill_viridis_d(alpha = 0.4) +
+  
+  # Set theme to classic
+  
+  theme_classic() +
+  
+  # Add axes labels, title, caption, and legend title
+  
+  labs(
+    x = "Hours Worked",
+    y = "Density",
+    title = "Hours Wife Works a Week",
+    caption = "Data from Olson (1998)",
+    fill = "Kids"
+  )
+  
+```
